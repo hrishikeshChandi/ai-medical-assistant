@@ -62,7 +62,7 @@ async def audio_upload(
     files: List[UploadFile] = File(...),
 ):
     additional_info = additional_info or "NA"
-    check_uploads(files, IMAGE_FILE_EXTENSIONS, file_type="audio")
+    check_uploads(files, AUDIO_FILE_EXTENSIONS, file_type="audio")
 
     try:
         start = time.perf_counter()
