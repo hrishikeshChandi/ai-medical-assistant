@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+selenium
+webdriver-manager
+python-multipart
+requests
+python-dotenv
+rq 
+rq-dashboard
+ipykernel
