@@ -67,29 +67,23 @@ async def process_query(
     additional_info: str,
 ) -> str:
 
-    # report -> llm response + side effects + new medicines (just names)
-    # api response -> llm response + side effects + price comparison links
-
     file_paths = save_files(files)
     driver = get_driver()
     medicines = [med.strip() for med in current_medicines.split(",")]
 
-    # side effects
     current_medicines_side_effects = await side_effects(medicines)
 
-    # model predictions
     uploaded_file_results = analyze_uploads(
-        file_paths=file_paths, model_type=model_type
+        file_paths=file_paths, 
+        model_type=model_type,
     )
 
-    # bio gpt response
     bio_gpt_summary = await get_biogpt_response(
         symptoms=symptoms,
         current_medication=current_medicines,
         uploaded_file_results=uploaded_file_results,
     )
 
-    # final response -> summary + medicine names as a list
     final_llm_response = await get_final_response(
         additional_info=additional_info,
         summary=bio_gpt_summary,
@@ -97,7 +91,6 @@ async def process_query(
         exercise=exercise,
     )
 
-    # report contains -> final response summary, current medicine side effects and new medicines that were suggested.
     report_content = (
         final_llm_response.summary
         + "\n"
@@ -112,7 +105,6 @@ async def process_query(
         f.write(report_content)
 
     try:
-        # final api response contains -> final llm response (summary) + side effects + price comparison (for newly suggested medicines)
         response = (
             final_llm_response.summary
             + "\nSide effects of the current medicines:\n"
@@ -125,3 +117,4 @@ async def process_query(
     finally:
         driver.quit()
     return response
+    
