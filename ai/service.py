@@ -13,7 +13,7 @@ transform = transforms.Compose(
     ]
 )
 
-IMAGE_MODEL = torch.load("./image/chest_xray_results/cpu_model.pth")
+IMAGE_MODEL = torch.load("./ai/image/chest_xray_results/cpu_model.pth", weights_only=False)
 IMAGE_MODEL.eval()
 
 with open("./ai/image/chest_xray_results/class_names.txt", "r") as f:
