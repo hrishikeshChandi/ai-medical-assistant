@@ -20,7 +20,7 @@ async def get_hospital_data(city: str):
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="internal server error, please try again later.",
+            detail=str(e),
         )
 
 
@@ -54,5 +54,5 @@ async def get_job_status(job_id: str):
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="internal server error, please try again later.",
+            detail=str(e),
         )
