@@ -71,7 +71,8 @@ def predict_image(file_path: str) -> str:
 
     with torch.inference_mode():
         logits = IMAGE_MODEL(img)
-        label = IMAGE_CLASS_NAMES[torch.round(torch.sigmoid(logits)).item()]
+        idx = int(torch.round(torch.sigmoid(logits)).item())
+        label = IMAGE_CLASS_NAMES[idx]
 
     return label
 
