@@ -19,6 +19,7 @@ This project is built for **learning and experimentation**, not for clinical use
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com/)
 [![UV](https://img.shields.io/badge/UV-Package_Manager-purple.svg)](https://github.com/astral-sh/uv)
+[![PyTorch](https://img.shields.io/badge/PyTorch-Deep_Learning-orange.svg)](https://pytorch.org/)
 
 - FastAPI – REST API
 - LangChain + Groq – LLM orchestration
@@ -219,3 +220,4 @@ This is a student project and experimental prototype.
 MIT License — You may use and modify this project under the terms of the MIT license.
 
 ---
+
