@@ -1,6 +1,6 @@
 # AI Medical Assistant
 
-> Student project — a production-ready FastAPI service that analyzes chest X-ray images combined with patient context using LLMs to generate medical summaries enriched with real-world hospital and medicine data.
+> Student project — a modern FastAPI service that analyzes chest X-ray images combined with patient context using LLMs to generate medical summaries enriched with real-world hospital and medicine data.
 
 > **⚠️ Not a substitute for professional medical advice. Educational use only.**
 
