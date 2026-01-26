@@ -118,35 +118,42 @@ GROQ_API_KEY=your_groq_api_key_here
 
 ### API Endpoints
 
-`POST /image_upload`
+`GET /scraper/hospitals_data`
+
+- Fetches live hospital availability data based on supported cities.
+- This endpoint triggers background scraping jobs (via Redis + RQ) and returns structured hospital information.
+> ⚠️ Data is scraped live and may take a few seconds depending on availability and load.
+
+`POST /uploads/image_upload`
 
 - Upload medical images (jpg, jpeg, png)
 - Includes user context (symptoms, medicines, etc.)
 
-`POST /audio_upload`
+`POST /uploads/audio_upload`
 
 - Upload audio files (mp3, wav, aac)
 - Same user context as image upload.
 - Work in progress
 
-`GET /download`
+`GET /uploads/download/{user_id}`
 
 - Download the generated medical report
 
 ### Example Request (Image Upload)
 
 ```bash
-curl -X POST "http://127.0.0.1:1200/image_upload" \
-  -F "diet=vegetarian" \
-  -F "symptoms=cough, breathlessness" \
-  -F "current_medicines=paracetamol" \
-  -F "files=@chest_xray.jpg"
+curl -X POST \
+  "http://127.0.0.1:1200/uploads/image_upload?diet=vegetarian&symptoms=cough,breathlessness&current_medicines=paracetamol&exercise=yoga&user_id=550e8400-e29b-41d4-a716-446655440000" \
+  -H "Accept: application/json" \
+  -F "files=@image1.png;type=image/png" \
+  -F "files=@image2.png;type=image/png"
 ```
 
 ### Example Request (Download Report)
 
 ```bash
-curl -O "http://127.0.0.1:1200/download"
+curl "http://127.0.0.1:1200/uploads/download/550e8400-e29b-41d4-a716-446655440000" \
+  -o report.txt
 ```
 
 ### Response Format
@@ -230,3 +237,4 @@ This is a student project and experimental prototype.
 MIT License — You may use and modify this project under the terms of the MIT license.
 
 ---
+
