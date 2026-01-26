@@ -29,5 +29,6 @@ class SideEffectsOutput(BaseModel):
         ..., description="The medicine name that was given as the input"
     )
     side_effects: str = Field(
-        "Some 2 - 3 most common or most serious side effects of the medicine that was given as input"
+        ...,
+        description="Some 2 - 3 most common or most serious side effects of the medicine that was given as input"
     )
