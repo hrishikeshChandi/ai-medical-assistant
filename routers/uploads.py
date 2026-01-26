@@ -17,6 +17,7 @@ async def image_upload(
     symptoms: str,
     current_medicines: str,
     exercise: str,
+    user_id: str,
     additional_info: Optional[str] = None,
     files: List[UploadFile] = File(...),
 ):
@@ -34,6 +35,7 @@ async def image_upload(
             diet=diet,
             exercise=exercise,
             additional_info=additional_info,
+            user_id=user_id,
         )
 
         end = time.perf_counter()
@@ -49,7 +51,7 @@ async def image_upload(
         )
 
     finally:
-        cleanup()
+        cleanup(user_id=user_id)
 
 
 @router.post("/audio_upload", status_code=status.HTTP_201_CREATED)
@@ -58,6 +60,7 @@ async def audio_upload(
     symptoms: str,
     current_medicines: str,
     exercise: str,
+    user_id: str,
     additional_info: Optional[str] = None,
     files: List[UploadFile] = File(...),
 ):
@@ -75,6 +78,7 @@ async def audio_upload(
             diet=diet,
             exercise=exercise,
             additional_info=additional_info,
+            user_id=user_id,
         )
 
         end = time.perf_counter()
@@ -90,12 +94,12 @@ async def audio_upload(
         )
 
     finally:
-        cleanup()
+        cleanup(user_id=user_id)
 
 
-@router.get("/download", status_code=status.HTTP_200_OK)
-async def download():
-    path = os.path.join(FOLDER, REPORT_FILE_NAME)
+@router.get("/download/{user_id}", status_code=status.HTTP_200_OK)
+async def download(user_id: str):
+    path = os.path.join(FOLDER, user_id, REPORT_FILE_NAME)
     if os.path.exists(path):
         return FileResponse(filename=REPORT_FILE_NAME, path=path)
     else:
