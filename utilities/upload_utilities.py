@@ -28,14 +28,16 @@ def check_uploads(
             )
 
 
-def save_files(files: List[UploadFile]) -> list[str]:
-    if not os.path.exists(FOLDER):
-        os.mkdir(FOLDER)
+def save_files(files: List[UploadFile], user_id: str) -> list[str]:
+    folder_path = os.path.join(FOLDER, user_id)
+    
+    if not os.path.exists(folder_path):
+        os.mkdir(folder_path)
 
     file_paths = []
 
     for file in files:
-        path = os.path.join(FOLDER, file.filename)
+        path = os.path.join(folder_path, file.filename)
         print(f"added : {path}")
         file_paths.append(path)
 
@@ -44,16 +46,17 @@ def save_files(files: List[UploadFile]) -> list[str]:
     return file_paths
 
 
-def cleanup() -> None:
-    if os.path.exists(FOLDER):
-        current_files = os.listdir(FOLDER)
+def cleanup(user_id: str) -> None:
+    folder_path = os.path.join(FOLDER, user_id)
+    if os.path.exists(folder_path):
+        current_files = os.listdir(folder_path)
 
         if REPORT_FILE_NAME in current_files:
             current_files.remove(REPORT_FILE_NAME)
 
         if len(current_files):
             for file_name in current_files:
-                path = os.path.join(FOLDER, file_name)
+                path = os.path.join(folder_path, file_name)
                 os.remove(path)
 
 
@@ -65,9 +68,10 @@ async def process_query(
     diet: str,
     exercise: str,
     additional_info: str,
+    user_id: str,
 ) -> str:
 
-    file_paths = save_files(files)
+    file_paths = save_files(files=files, user_id=user_id)
     driver = get_driver()
     medicines = [med.strip() for med in current_medicines.split(",")]
 
@@ -100,7 +104,7 @@ async def process_query(
         + ", ".join([m.medicine_name for m in final_llm_response.medicines])
     )
 
-    path = os.path.join(FOLDER, REPORT_FILE_NAME)
+    path = os.path.join(FOLDER, user_id, REPORT_FILE_NAME)
     with open(path, "w") as f:
         f.write(report_content)
 
