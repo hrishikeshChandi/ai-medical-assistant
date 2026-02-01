@@ -20,9 +20,8 @@ with open(CITIES_FILE_PATH) as f:
 def get_details(hospital, time_to_wait: int = 2) -> dict:
     name = hospital.find_element(By.CSS_SELECTOR, "h2").text
     location = hospital.find_element(By.CSS_SELECTOR, "span.c-locality-info span").text
-    consultation_fee = hospital.find_element(
-        By.CSS_SELECTOR, "p.line-3 span.u-bold"
-    ).text
+    fee_elements = hospital.find_elements(By.CSS_SELECTOR, "p.line-3 > span.u-bold")
+    consultation_fee = fee_elements[0].text if fee_elements else "Not provided"
     link = hospital.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
 
     try:
