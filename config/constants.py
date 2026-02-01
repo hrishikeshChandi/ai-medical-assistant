@@ -14,6 +14,9 @@ PHARM_EASY_URL = "https://pharmeasy.in/search/all?name="
 MED_PLUS_URL = "https://www.medplusmart.com/"
 PROACTO_URL = r"https://www.practo.com/search/hospitals?results_type=hospital&q=%5B%7B%22word%22%3A%22hospitals%22%2C%22autocompleted%22%3Atrue%2C%22category%22%3A%22hospital_name%22%7D%5D&city="
 
+IMAGE_FILE_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff"]
+AUDIO_FILE_EXTENSIONS = ["mp3", "wav", "aac", "flac", "ogg", "m4a", "wma"]
+
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
