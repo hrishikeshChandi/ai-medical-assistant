@@ -10,16 +10,20 @@
 
 AI Medical Assistant is a FastAPI application that accepts chest X-ray images along with patient context (symptoms, current medications, diet, exercise). These inputs are processed through a multi-modal AI pipeline to generate structured medical summaries enriched with side-effect analysis and resource information.
 
-_Note: Audio analysis module is currently under development._
+> Note:
+
+- Audio analysis module is currently under development.
+- Chest X-ray model training is not pushed to GitHub because of size constraints. Run `main.ipynb` in `ai/image/` folder first.
 
 ---
 
 ## Tech Stack
 
-[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com/)
+[![Python](https://img.shields.io/badge/Python-3.12.4-blue.svg)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.128.0-green.svg)](https://fastapi.tiangolo.com/)
 [![UV](https://img.shields.io/badge/UV-Package_Manager-purple.svg)](https://github.com/astral-sh/uv)
 [![PyTorch](https://img.shields.io/badge/PyTorch-Deep_Learning-orange.svg)](https://pytorch.org/)
+[![Redis](https://img.shields.io/badge/Redis-Queue-red.svg)](https://redis.io/)
 
 - FastAPI – REST API
 - LangChain + Groq – LLM orchestration
@@ -35,16 +39,6 @@ _Note: Audio analysis module is currently under development._
 - Extract medicine side effects using structured LLM prompts with Pydantic validation
 - Scrape live web-scraped hospital availability and medicine price comparisons via Selenium
 - Generate downloadable medical reports, with async Redis job queues used for hospital data scraping
-
-## System Architecture
-
-- **Modular FastAPI backend** with clean separation of concerns
-
-- **Async job processing** using Redis + RQ for scalable workloads
-
-- **Structured output validation** preventing LLM hallucinations in medical context
-
-- **Automatic resource management** with file cleanup and error resilience
 
 ---
 
@@ -69,13 +63,14 @@ ai-medical-assistant/
 │ └── final_instructions.txt # Report template
 ├── routers/
 │ ├── scraper.py # Hospital data endpoints
-│ └── uploads.py # File upload endpoints
+│ ├── uploads.py # File upload endpoints
+│ └── jobs.py # Job status endpoints
+├── uploads/ # Temporary file storage
 ├── utilities/
 │ ├── driver.py # Selenium webdriver management
-│ ├── scraper_job.py # Async scraping jobs
+│ ├── jobs.py # Job processing functions
 │ ├── scraper_utilities.py # Web scraping logic
 │ └── upload_utilities.py # File processing & cleanup
-├── uploads/ # Temporary file storage
 ├── docker-compose.yaml # Containerized deployment setup
 ├── main.py # FastAPI app entry point
 ├── pyproject.toml # UV project configuration
@@ -92,78 +87,96 @@ ai-medical-assistant/
 - UV Package Manager
 - Redis
 - Groq API key
+- Firefox browser
+- Docker
 
 ### Quick Start
 
-```bash
-# Clone the repo
-git clone https://github.com/hrishikeshChandi/ai-medical-assistant.git
-cd ai-medical-assistant
+- Clone the repo
 
-uv sync
-source .venv/bin/activate # Linux/macOS
+  ```bash
+  git clone https://github.com/hrishikeshChandi/ai-medical-assistant.git
+  cd ai-medical-assistant
+  ```
 
-# .venv\Scripts\activate # Windows
+- Setup the environment
 
-uv run main.py
-```
+  ```bash
+  uv sync
+  source .venv/bin/activate # Linux/macOS
 
-Create `config/.env`:
+  # .venv\Scripts\activate # Windows
+  ```
 
-```env
-GROQ_API_KEY=your_groq_api_key_here
-```
+- Start the redis server
+
+  ```bash # Start redis server
+  docker-compose up -d
+  ```
+
+- Open another terminal(s) to start the rq workers
+
+  ```bash
+  uv run rq worker --url redis://localhost:6379
+  ```
+
+- Start the FastAPI server
+
+  ```bash
+  uv run main.py
+  ```
+
+- Create `config/.env`:
+
+  ```env
+  GROQ_API_KEY=your_groq_api_key_here
+  ```
 
 ## Usage
 
 ### API Endpoints
 
-`GET /scraper/hospitals_data`
+`GET /`
 
-- Fetches live hospital availability data based on supported cities.
-- This endpoint triggers background scraping jobs (via Redis + RQ) and returns structured hospital information.
-> ⚠️ Data is scraped live and may take a few seconds depending on availability and load.
+- Health check endpoint
+- Returns: `{"message": "yeye api is working :)"}`
+
+`GET /scraper/hospitals_data?city={city_name}`
+
+- Fetches live hospital availability data for the specified city
+- Query parameter: `city` (required, e.g., `city=Mumbai`)
+- Returns: `{"status": "queued", "job_id": "job-id-here"}`
+- Background job scrapes hospital data from Practo
+- Check job status via `/jobs/job_status/{job_id}`
+
+`GET /jobs/job_status/{job_id}`
+
+- Check status of background jobs
+- Path parameter: `job_id` (from hospital scraping or upload endpoints)
+- Returns: `{"status": "queued|in progress|completed|failed", "data": {...}}`
+- For completed hospital scraping: returns list of hospitals with names, locations, ratings, fees
+- For completed upload processing: returns medical summary with side effects and medicine price links
 
 `POST /uploads/image_upload`
 
-- Upload medical images (jpg, jpeg, png)
-- Includes user context (symptoms, medicines, etc.)
+- Upload chest X-ray images for analysis
+- **Parameters** (query): `diet`, `symptoms`, `current_medicines`, `exercise`, `user_id`, `additional_info` (optional)
+- **Files**: Multiple image files allowed (jpg, jpeg, png, gif, bmp, webp, tiff)
+- **Returns**: `{"status": "queued", "job_id": "job-id-here"}`
 
 `POST /uploads/audio_upload`
 
-- Upload audio files (mp3, wav, aac)
-- Same user context as image upload.
-- Work in progress
+- Upload audio files for analysis (stub implementation)
+- Same parameters as image upload
+- **Files**: Multiple audio files allowed (mp3, wav, aac, flac, ogg, m4a, wma)
+- **Note**: Audio analysis module is under development
 
 `GET /uploads/download/{user_id}`
 
-- Download the generated medical report
-
-### Example Request (Image Upload)
-
-```bash
-curl -X POST \
-  "http://127.0.0.1:1200/uploads/image_upload?diet=vegetarian&symptoms=cough,breathlessness&current_medicines=paracetamol&exercise=yoga&user_id=550e8400-e29b-41d4-a716-446655440000" \
-  -H "Accept: application/json" \
-  -F "files=@image1.png;type=image/png" \
-  -F "files=@image2.png;type=image/png"
-```
-
-### Example Request (Download Report)
-
-```bash
-curl "http://127.0.0.1:1200/uploads/download/550e8400-e29b-41d4-a716-446655440000" \
-  -o report.txt
-```
-
-### Response Format
-
-```json
-{
-  "response": "<LLM-generated summary and scraped info>",
-  "time_taken": "X seconds"
-}
-```
+- Download generated medical report
+- Path parameter: `user_id` (same as used in upload)
+- Returns: `reports.txt` file with medical summary
+- File saved at: `uploads/{user_id}/reports.txt`
 
 ---
 
@@ -171,19 +184,45 @@ curl "http://127.0.0.1:1200/uploads/download/550e8400-e29b-41d4-a716-44665544000
 
 ### Architecture
 
-1. **Image Analysis**: Chest X-ray classification using EfficientNet-B2
-2. **LLM Summarization**: Summarization and reasoning via Llama 3.3 70B with Pydantic schema validation
-3. **Side Effects Analysis**: Medicine-specific risk assessment via structured LLM prompts
-4. **Resource Enrichment**: Live web-scraped medicine price and hospital information via Selenium
-5. **Async Processing**: Redis + RQ for scalable background job handling
+1. **Image Analysis Pipeline**
+   - Chest X-ray classification using EfficientNet-B2
+   - Fine-tuned on balanced chest X-ray dataset (Kaggle)
+   - Binary classification: Normal vs. Pneumonia
+   - Model inference with PyTorch
+
+2. **LLM Orchestration Layer**
+   - **BioGPT Chain**: Generates medical summaries from symptoms, medications, and image results
+   - **Side Effects Chain**: Extracts 2-3 common side effects for each medicine
+   - **Final Chain**: Combines all inputs into structured medical report
+   - Powered by Llama 3.3 70B via Groq API with temperature control
+
+3. **Web Scraping Engine**
+   - Hospital data scraping from Practo (names, locations, ratings, consultation fees)
+   - Medicine price comparison across PharmEasy and MedPlus
+   - Selenium with Firefox headless browser
+   - City-based filtering with validation
+
+4. **Job Processing System**
+   - Redis/Valkey queue for background task management
+   - RQ (Redis Queue) for job scheduling and execution
+   - Job status tracking with `/jobs/job_status/{job_id}` endpoint
+   - Async processing for long-running operations
+
+5. **File Lifecycle Management**
+   - Multi-file upload support with validation
+   - Temporary storage in user-specific folders
+   - Report generation in `uploads/{user_id}/reports.txt`
+   - Automatic cleanup post-processing
 
 ### System Features
 
-- **Modular Design**: Separate routers, utilities, and AI components
-- **Async Processing**: Redis+RQ for background job handling
-- **Structured Outputs**: Pydantic validation for LLM responses
-- **Error Resilience**: Comprehensive exception handling
-- **File Management**: Automatic cleanup of temporary files
+- **Modular API Design**: Three dedicated routers (`scraper`, `uploads`, `jobs`) with clear separation
+- **Structured Validation**: Pydantic models enforce consistent LLM outputs and API responses
+- **Real-time Processing**: Live web scraping integrated with AI analysis
+- **Scalable Job Queue**: Background processing for resource-intensive operations
+- **Comprehensive Error Handling**: Graceful degradation for external service failures
+- **Developer Experience**: Full API documentation at `/docs`, consistent response formats
+- **Resource Efficiency**: Automatic cleanup of temporary files and browser instances
 
 ---
 
@@ -223,18 +262,8 @@ redis-cli ping
 
 ---
 
-## Disclaimer
-
-**⚠️ Educational use only.**
-This project and its outputs are not medical advice and must not be used for diagnosis or treatment. Always consult a qualified medical professional.
-
-This is a student project and experimental prototype.
-
----
-
 ## License
 
 MIT License — You may use and modify this project under the terms of the MIT license.
 
 ---
-
